@@ -62,6 +62,7 @@ namespace VBEK {
 		QLabel* nameLabel = new QLabel("Name:");
 		nameInput = new QLineEdit();
 		nameInput->setMaxLength(15);
+
 		QPushButton* changeNameButton = new QPushButton("Change");
 		connect(changeNameButton, &QPushButton::clicked, this, &Client::onChangeName);
 		connect(nameInput, &QLineEdit::returnPressed, changeNameButton, &QPushButton::click);
@@ -97,18 +98,6 @@ namespace VBEK {
 		connect(messageInput, &QLineEdit::returnPressed, sendButton, &QPushButton::click);
 
 		return screen;
-	}
-
-
-	void Client::switchToChatScreen() {
-		loginScreen->hide();
-		chatScreen->show();
-
-		socket->write(QString("CONNECT:%1\n").arg(username).toUtf8());
-	}
-
-	void Client::addMessageToChat(const QString& sender, const QString& message) {
-		chatBox->append(QString("%1: %2").arg(sender, message));
 	}
 
 
@@ -148,7 +137,8 @@ namespace VBEK {
 	}
 
 	void Client::onConnectionTimeout() {
-		QMessageBox::critical(this, "Connection Error", "Failed to connect to the server. Please check the IP address.");
+		QMessageBox::critical(this, "Connection Error",
+			"Failed to connect to the server. Please check the IP address.");
 	}
 
 	void Client::onReadyRead() {
@@ -183,10 +173,14 @@ namespace VBEK {
 				QString newUsername = data.mid(61);
 				username = newUsername;
 				usernameInput->setText(newUsername);
-				QMessageBox::information(this, "Username Taken", QString("Your username is already taken. Your new username is: %1").arg(newUsername));
+				QMessageBox::information(this, "Username Taken", \
+					QString("Your username is already taken. " \
+							"Your new username is: %1").arg(newUsername));
+
 			}
 			else if (data.startsWith("SERVER:This username is already taken")) {
-				QMessageBox::warning(this, "Username Error", "This username is already taken. Please choose another.");
+				QMessageBox::warning(this, "Username Error",
+					"This username is already taken. Please choose another.");
 				nameInput->clear();
 			}
 		}
@@ -210,5 +204,17 @@ namespace VBEK {
 
 	void Client::onUserSelected(QListWidgetItem* item) {
 		currentRecipient = item->text();
+	}
+
+
+	void Client::switchToChatScreen() {
+		loginScreen->hide();
+		chatScreen->show();
+
+		socket->write(QString("CONNECT:%1\n").arg(username).toUtf8());
+	}
+
+	void Client::addMessageToChat(const QString& sender, const QString& message) {
+		chatBox->append(QString("%1: %2").arg(sender, message));
 	}
 }

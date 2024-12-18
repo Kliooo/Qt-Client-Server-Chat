@@ -22,15 +22,16 @@ namespace VBEK {
 		protected:
 			void incomingConnection(qintptr socketDescriptor) override;
 
+
+		private slots:
+			void onReadyRead();
+			void onClientDisconnected();
+
 		private:
 			QString generateRandomUsername();
 			void broadcastMessage(const QString& sender, const QString& message);
 			void broadcastUserList();
 			void privateMessage(QTcpSocket* from, const QString& recipient, const QString& message);
 			void sendMessageToClient(QTcpSocket* client, const QString& message);
-
-		private slots:
-			void onReadyRead();
-			void onClientDisconnected();
 	};
 }

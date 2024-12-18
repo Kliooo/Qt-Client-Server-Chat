@@ -11,9 +11,6 @@ namespace VBEK {
 	class Client : public QWidget {
 		Q_OBJECT
 
-		public:
-			Client(QWidget *parent = nullptr);
-
 		private:
 			QWidget* createLoginScreen();
 			QWidget* createChatScreen();
@@ -34,9 +31,8 @@ namespace VBEK {
 			QString currentRecipient;
 			QString username;
 
-		private:
-			void switchToChatScreen();
-			void addMessageToChat(const QString& sender, const QString& message);
+		public:
+			Client(QWidget *parent = nullptr);
 
 		private slots:
 			void onConnectToServer();
@@ -45,5 +41,9 @@ namespace VBEK {
 			void onReadyRead();
 			void onSendMessage();
 			void onUserSelected(QListWidgetItem* item);
+
+		private:
+			void switchToChatScreen();
+			void addMessageToChat(const QString& sender, const QString& message);
 	};
 }

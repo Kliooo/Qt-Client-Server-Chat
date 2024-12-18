@@ -21,58 +21,6 @@ namespace VBEK {
 		clientsNames.append("");
 	}
 
-	QString Server::generateRandomUsername() {
-		const QString chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-		QString username;
-		for (int i = 0; i < 10; ++i) {
-			username.append(chars.at(rand() % chars.length()));
-		}
-		qDebug() << "Client connected: " << username;
-		return username;
-	}
-
-	void Server::broadcastMessage(const QString& sender, const QString& message) {
-		QString formattedMessage = QString("MSG:%1:ALL:%2\n").arg(sender, message);
-		for (QTcpSocket* client : clientsSockets) {
-			sendMessageToClient(client, formattedMessage);
-		}
-	}
-
-	void Server::broadcastUserList() {
-		QStringList userList = clientsNames;
-		QString userListMessage = QString("USERS:%1\n").arg(userList.join(','));
-		for (QTcpSocket* client : clientsSockets) {
-			sendMessageToClient(client, userListMessage);
-		}
-	}
-
-	void Server::privateMessage(QTcpSocket* from, const QString& recipient, const QString& message) {
-		QString formattedMessage = QString("MSG:%1:%2:%3\n").arg(clientsNames[clientsSockets.indexOf(from)], recipient, message);
-
-		bool recipientFound = false;
-
-		for (QTcpSocket* client : clientsSockets) {
-			int index = clientsSockets.indexOf(client);
-			if (clientsNames[index] == recipient) {
-				if (client != from) {
-					sendMessageToClient(client, formattedMessage);
-				}
-				recipientFound = true;
-			}
-		}
-
-		if (recipientFound) {
-			sendMessageToClient(from, formattedMessage);
-		} else {
-			sendMessageToClient(from, "MSG:SERVER:The user was not found\n");
-		}
-	}
-
-	void Server::sendMessageToClient(QTcpSocket* client, const QString& message) {
-		if (client && client->isOpen()) {
-			client->write(message.toUtf8() + "\n");
-		}
-	}
 
 	void Server::onReadyRead() {
 		QTcpSocket* senderSocket = qobject_cast<QTcpSocket*>(sender());
@@ -88,7 +36,8 @@ namespace VBEK {
 					QString newUsername = generateRandomUsername();
 					int index = clientsSockets.indexOf(senderSocket);
 					clientsNames[index] = newUsername;
-					sendMessageToClient(senderSocket, QString("SERVER:Your username is already taken. Your new username is: %1").arg(newUsername));
+					sendMessageToClient(senderSocket, QString("SERVER:Your username is already taken. "
+								"Your new username is: %1").arg(newUsername));
 				} else {
 					int index = clientsSockets.indexOf(senderSocket);
 					clientsNames[index] = username;
@@ -101,7 +50,8 @@ namespace VBEK {
 				QString newUsername = data.mid(12);
 
 				if (clientsNames.contains(newUsername)) {
-					sendMessageToClient(senderSocket, "SERVER:This username is already taken. Please choose another.");
+					sendMessageToClient(senderSocket, "SERVER:This username is already taken. "
+						"Please choose another.");
 					return;
 				}
 
@@ -142,5 +92,64 @@ namespace VBEK {
 
 		qDebug() << "The client has disconnected: " << username;
 		broadcastUserList();
+	}
+
+
+	QString Server::generateRandomUsername() {
+		const QString chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+		QString username;
+		for (int i = 0; i < 10; ++i) {
+			username.append(chars.at(rand() % chars.length()));
+		}
+		qDebug() << "Client connected: " << username;
+		return username;
+	}
+
+	void Server::broadcastMessage(const QString& sender, const QString& message) {
+		QString formattedMessage = QString("MSG:%1:ALL:%2\n").arg(sender, message);
+		for (QTcpSocket* client : clientsSockets) {
+			sendMessageToClient(client, formattedMessage);
+		}
+	}
+
+	void Server::broadcastUserList() {
+		QStringList userList = clientsNames;
+		QString userListMessage = QString("USERS:%1\n").arg(userList.join(','));
+		for (QTcpSocket* client : clientsSockets) {
+			sendMessageToClient(client, userListMessage);
+		}
+	}
+
+	void Server::privateMessage(QTcpSocket* from, const QString& recipient, const QString& message) {
+		QString formattedMessage = QString("MSG:%1:%2:%3\n")
+			.arg(
+				clientsNames[clientsSockets.indexOf(from)],
+				recipient,
+				message
+			);
+
+		bool recipientFound = false;
+
+		for (QTcpSocket* client : clientsSockets) {
+			int index = clientsSockets.indexOf(client);
+			if (clientsNames[index] == recipient) {
+				if (client != from) {
+					sendMessageToClient(client, formattedMessage);
+				}
+				recipientFound = true;
+			}
+		}
+
+		if (recipientFound) {
+			sendMessageToClient(from, formattedMessage);
+		} else {
+			sendMessageToClient(from, "MSG:SERVER:The user was not found\n");
+		}
+	}
+
+	void Server::sendMessageToClient(QTcpSocket* client, const QString& message) {
+		if (client && client->isOpen()) {
+			client->write(message.toUtf8() + "\n");
+		}
 	}
 }
